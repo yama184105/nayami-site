@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>悩み相談フォーム</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      background: #f0f8ff;
+      margin: 0;
+      padding: 2rem;
+      display: flex;
+      justify-content: center;
+    }
+    .container {
+      max-width: 800px;
+      width: 100%;
+      background: white;
+      padding: 2rem;
+      border-radius: 1rem;
+      box-shadow: 0 0 20px rgba(0,0,0,0.1);
+    }
+    .step {
+      display: none;
+    }
+    .step.active {
+      display: block;
+    }
+    label {
+      display: block;
+      margin-top: 1rem;
+    }
+    textarea, input[type="text"] {
+      width: 100%;
+      padding: 0.5rem;
+      margin-top: 0.3rem;
+      border: 1px solid #ccc;
+      border-radius: 0.5rem;
+    }
+    button {
+      margin-top: 1rem;
+      margin-right: 1rem;
+      padding: 0.5rem 1rem;
+      border: none;
+      border-radius: 0.5rem;
+      background-color: #007bff;
+      color: white;
+      cursor: pointer;
+    }
+    .red {
+      background-color: #dc3545;
+    }
+    .history {
+      margin-top: 2rem;
+    }
+    .history-item {
+      margin-bottom: 1rem;
+      border-bottom: 1px solid #ccc;
+      padding-bottom: 0.5rem;
+    }
+    .hidden {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div id="step-container">
+      <div id="step1" class="step active">
+        <h2>① 悩みあるんか？</h2>
+        <button onclick="nextStep('yes')">はい</button>
+        <button onclick="nextStep('no')">いいえ</button>
+      </div>
+      <div id="step2" class="step">
+        <h2>② 何を悩んでんの？</h2>
+        <label>タイトル：<input type="text" id="title" /></label>
+        <label>内容：<textarea id="content2"></textarea></label>
+        <button onclick="prevStep()">戻る</button>
+        <button onclick="showStep(3)">次へ</button>
+        <div id="summary2"></div>
+      </div>
+      <div id="step3" class="step">
+        <h2>③ それってどういう状況？</h2>
+        <label><textarea id="content3"></textarea></label>
+        <button onclick="prevStep()">戻る</button>
+        <button onclick="showStep(4)">次へ</button>
+        <div id="summary3"></div>
+      </div>
+      <div id="step4" class="step">
+        <h2>④ どうなればいい？</h2>
+        <label><textarea id="content4"></textarea></label>
+        <button onclick="prevStep()">戻る</button>
+        <button onclick="showStep(5)">次へ</button>
+        <div id="summary4"></div>
+      </div>
+      <div id="step5" class="step">
+        <h2>⑤ 次のどれで解決できそう？</h2>
+        <label><input type="radio" name="solution" value="問題を問題でなくする" />問題を問題でなくする</label>
+        <label><input type="radio" name="solution" value="具体的な課題・行動に昇華する" />具体的な課題・行動に昇華する</label>
+        <button onclick="prevStep()">戻る</button>
+        <button onclick="showStep(6)">次へ</button>
+        <div id="summary5"></div>
+      </div>
+      <div id="step6" class="step">
+        <h2>⑥ じゃあどうする？</h2>
+        <label><textarea id="content6"></textarea></label>
+        <button onclick="prevStep()">戻る</button>
+        <button onclick="showStep(7)">次へ</button>
+        <div id="summary6"></div>
+      </div>
+      <div id="step7" class="step">
+        <h2>⑦ じゃあやれ</h2>
+        <button onclick="prevStep()">戻る</button>
+        <button onclick="saveEntry()">保存して最初に戻る</button>
+        <div id="summary7"></div>
+      </div>
+    </div>
+
+    <div class="history">
+      <h3>保存された悩み</h3>
+      <div id="history-list"></div>
+    </div>
+  </div>
+
+  <script>
+    let currentStep = 1;
+    let data = {};
+
+    function showStep(stepNum) {
+      document.querySelectorAll(".step").forEach(div => div.classList.remove("active"));
+      document.getElementById("step" + stepNum).classList.add("active");
+      currentStep = stepNum;
+      showSummaries();
+    }
+
+    function nextStep(answer) {
+      if (currentStep === 1 && answer === "no") {
+        alert("了解です、悩みができたらまた来てください！");
+        showStep(1);
+      } else {
+        showStep(currentStep + 1);
+      }
+    }
+
+    function prevStep() {
+      showStep(currentStep - 1);
+    }
+
+    function saveEntry() {
+      const title = document.getElementById("title").value;
+      const entry = {
+        title: title || "(無題)",
+        step2: document.getElementById("content2").value,
+        step3: document.getElementById("content3").value,
+        step4: document.getElementById("content4").value,
+        step5: document.querySelector('input[name="solution"]:checked')?.value || "",
+        step6: document.getElementById("content6").value
+      };
+
+      const history = JSON.parse(localStorage.getItem("entries") || "[]");
+      history.push(entry);
+      localStorage.setItem("entries", JSON.stringify(history));
+      renderHistory();
+      showStep(1);
+    }
+
+    function showSummaries() {
+      const s2 = document.getElementById("content2").value;
+      const s3 = document.getElementById("content3").value;
+      const s4 = document.getElementById("content4").value;
+      const s5 = document.querySelector('input[name="solution"]:checked')?.value || "";
+      const s6 = document.getElementById("content6").value;
+
+      if (currentStep >= 3) document.getElementById("summary3").innerHTML = `<h4>②:</h4><p>${s2}</p>`;
+      if (currentStep >= 4) document.getElementById("summary4").innerHTML = `<h4>②:</h4><p>${s2}</p><h4>③:</h4><p>${s3}</p>`;
+      if (currentStep >= 5) document.getElementById("summary5").innerHTML = `<h4>②:</h4><p>${s2}</p><h4>③:</h4><p>${s3}</p><h4>④:</h4><p>${s4}</p>`;
+      if (currentStep >= 6) document.getElementById("summary6").innerHTML = `<h4>②:</h4><p>${s2}</p><h4>③:</h4><p>${s3}</p><h4>④:</h4><p>${s4}</p><h4>⑤:</h4><p>${s5}</p>`;
+      if (currentStep >= 7) document.getElementById("summary7").innerHTML = `<h4>②:</h4><p>${s2}</p><h4>③:</h4><p>${s3}</p><h4>④:</h4><p>${s4}</p><h4>⑤:</h4><p>${s5}</p><h4>⑥:</h4><p>${s6}</p>`;
+    }
+
+    function renderHistory() {
+      const history = JSON.parse(localStorage.getItem("entries") || "[]");
+      const container = document.getElementById("history-list");
+      container.innerHTML = "";
+      history.forEach((entry, i) => {
+        const div = document.createElement("div");
+        div.className = "history-item";
+        div.innerHTML = `
+          <strong>${entry.title}</strong>
+          <button onclick="toggleDetails(${i})">内容</button>
+          <button class="red" onclick="deleteEntry(${i})">削除</button>
+          <div id="detail${i}" class="hidden">
+            <p><strong>②:</strong> ${entry.step2}</p>
+            <p><strong>③:</strong> ${entry.step3}</p>
+            <p><strong>④:</strong> ${entry.step4}</p>
+            <p><strong>⑤:</strong> ${entry.step5}</p>
+            <p><strong>⑥:</strong> ${entry.step6}</p>
+          </div>
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    function toggleDetails(index) {
+      const detail = document.getElementById("detail" + index);
+      detail.classList.toggle("hidden");
+    }
+
+    function deleteEntry(index) {
+      const history = JSON.parse(localStorage.getItem("entries") || "[]");
+      history.splice(index, 1);
+      localStorage.setItem("entries", JSON.stringify(history));
+      renderHistory();
+    }
+
+    renderHistory();
+  </script>
+</body>
+</html>
